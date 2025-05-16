@@ -1,0 +1,24 @@
+{
+  "include": ["react-slots.tsx"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "dom"],
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  }
+}

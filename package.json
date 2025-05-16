@@ -1,0 +1,57 @@
+{
+  "name": "react-slots",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A simple utility for adding named slots to React components, inspired by the slot pattern in Vue.",
+  "license": "ISC",
+  "author": "Aiera Inc.",
+  "type": "module",
+  "main": "dist/react-slots.js",
+  "types": "dist/react-slots.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/react-slots.js",
+      "types": "./dist/react-slots.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "node ./build.js",
+    "lint": "eslint .",
+    "fmt": "prettier --write .",
+    "prepublishOnly": "npm run build"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "trailingComma": "all",
+    "tabWidth": 2,
+    "printWidth": 100
+  },
+  "peerDependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
+    "@types/react": "^19.1.4",
+    "esbuild": "^0.25.4",
+    "esbuild-plugin-tsc": "^0.5.0",
+    "eslint": "^9.26.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "expect-type": "^1.2.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.5.3",
+    "ts-jest": "^29.3.3",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1"
+  }
+}
