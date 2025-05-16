@@ -90,6 +90,7 @@ function App() {
         <article>A second article.</article>
         <MyComponent.Footer />
       </MyComponent>
+      
       // ...to this
       <MyComponent author="John Doe">
         <MyComponent.Title title="Hello World" />
