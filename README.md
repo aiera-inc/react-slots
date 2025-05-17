@@ -112,10 +112,10 @@ The _slot schema_ has two unique syntax structures that can be used to define **
 By default, only one instance of a component will be passed to a slot and the others will be tossed.
 
 ```tsx
-const Article = (props) => <article>{props.children}</article>;
+const ArticleExample = (props) => <article>{props.children}</article>;
 
 const SLOT_SCHEMA = {
-  Article: Article,
+  Article: ArticleExample,
 } as const;
 
 const Blog = SlottedComponent(SLOT_SCHEMA)<{ author: string }>(({
@@ -139,10 +139,10 @@ function App() {
 To allow for repeated uses of a slot, you simply need to wrap it in square brackets in the slot schema. This tells the utility that multiple instances of the `<Article />` slot may be passed and should be rendered.
 
 ```tsx
-const Article = (props) => <article>{props.children}</article>;
+const ArticleExample = (props) => <article>{props.children}</article>;
 
 const SLOT_SCHEMA = {
-  Article: [Article],
+  Article: [ArticleExample],
 } as const;
 ```
 
@@ -151,12 +151,11 @@ const SLOT_SCHEMA = {
 Sometimes you may want to link components to indicate a relationship between parent and child, but you don't have a concrete location that you want to place the children in your layout. You are effectively namespacing the child component to the parent. This is often also described as **composed components**.
 
 ```tsx
-const Article = (props) => <article>{props.children}</article>;
+const ArticleExample = (props) => <article>{props.children}</article>;
 
-const SLOT_SCHEMA = {
-  // Wrapping the component in curly braces
-  Article: { Article }, // tells the utility this is a namespaced
-} as const; // component.
+const SLOT_SCHEMA = {           // Wrapping the component in curly braces
+  Article: { ArticleExample },  // tells the utility this is a namespaced
+} as const;                     // component.
 
 const Blog = SlottedComponent(SLOT_SCHEMA)<{ author: string }>(({
   author,
