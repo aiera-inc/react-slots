@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import React, { type JSX } from 'react';
+import React from 'react';
 import {
   getSlots,
   type SlotProviderInterface,
