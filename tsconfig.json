@@ -5,7 +5,7 @@
     "lib": ["ES2023", "dom"],
     "jsx": "react-jsx",
     "esModuleInterop": true,
-
+    "outDir": "./dist",
     "module": "ESNext",
     "skipLibCheck": true,
 
