@@ -50,7 +50,7 @@
  * __Warning__: This does not support nested fragments. Wrapping a slotted child
  * two levels deep in a fragment will cause it to be treated as a generic child.
  */
-import React, { type JSX, type JSXElementConstructor, type ReactNode, useMemo } from 'react';
+import React, { type JSXElementConstructor, type ReactNode, useMemo } from 'react';
 
 /** A narrowed version of the React.JSXElementConstructor. */
 export type SlotConstructor<P = any> = (props: P) => React.ReactElement | null;

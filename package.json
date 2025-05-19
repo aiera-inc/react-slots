@@ -1,39 +1,48 @@
 {
-  "name": "react-slots",
+  "name": "@aiera-inc/react-slots",
   "version": "0.1.0",
   "private": true,
   "description": "A simple utility for adding named slots to React components, inspired by the slot pattern in Vue.",
-  "license": "ISC",
+  "keywords": [
+    "react",
+    "slots",
+    "ui",
+    "frontend",
+    "typescript",
+    "javascript",
+    "utility"
+  ],
+  "homepage": "https://github.com/aiera-inc/react-slots#readme",
+  "bugs": {
+    "url": "https://github.com/aiera-inc/react-slots/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aiera-inc/react-slots.git"
+  },
+  "license": "MIT",
   "author": "Aiera Inc.",
   "type": "module",
-  "main": "dist/react-slots.js",
-  "types": "dist/react-slots.d.ts",
-  "files": [
-    "dist"
-  ],
   "exports": {
     ".": {
       "import": "./dist/react-slots.js",
       "types": "./dist/react-slots.d.ts"
     }
   },
+  "main": "dist/react-slots.js",
+  "types": "dist/react-slots.d.ts",
+  "directories": {
+    "example": "example"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "jest",
     "build": "node ./build.js",
     "lint": "eslint .",
     "fmt": "prettier --write .",
     "prepublishOnly": "npm run build"
-  },
-  "prettier": {
-    "singleQuote": true,
-    "semi": true,
-    "trailingComma": "all",
-    "tabWidth": 2,
-    "printWidth": 100
-  },
-  "peerDependencies": {
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
@@ -53,5 +62,16 @@
     "tslib": "^2.8.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.32.1"
+  },
+  "peerDependencies": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "trailingComma": "all",
+    "tabWidth": 2,
+    "printWidth": 100
   }
 }
