@@ -1,6 +1,6 @@
 {
   "name": "@aiera-inc/react-slots",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A simple utility for adding named slots to React components, inspired by the slot pattern in Vue.",
   "keywords": [
     "react",
@@ -9,7 +9,12 @@
     "frontend",
     "typescript",
     "javascript",
-    "utility"
+    "utility",
+    "component",
+    "composition",
+    "library",
+    "aiera",
+    "aiera-inc"
   ],
   "homepage": "https://github.com/aiera-inc/react-slots#readme",
   "bugs": {
