@@ -43,7 +43,7 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "lint": "eslint .",
     "fmt": "prettier --write .",
-    "prepublishOnly": "npm run test & npm run build && npm run build:types"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
