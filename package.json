@@ -5,16 +5,22 @@
   "keywords": [
     "react",
     "slots",
+    "react-slots",
     "ui",
+    "ui-components",
     "frontend",
     "typescript",
     "javascript",
     "utility",
     "component",
     "composition",
+    "lib",
     "library",
     "aiera",
-    "aiera-inc"
+    "aiera-inc",
+    "@aiera",
+    "@aiera-inc",
+    "aiera-inc/react-slots"
   ],
   "homepage": "https://github.com/aiera-inc/react-slots#readme",
   "bugs": {
