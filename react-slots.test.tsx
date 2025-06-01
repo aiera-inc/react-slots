@@ -240,7 +240,7 @@ describe('getSlots', () => {
     expect(slots.GenericDiv).toHaveLength(0);
   });
 
-  test('getSlows converts undefined element in multi-slot to empty array', () => {
+  test('getSlots converts undefined element in multi-slot to empty array', () => {
     const _children = undefined;
     const { slots } = getSlots(_children, SLOT_SCHEMA);
 
