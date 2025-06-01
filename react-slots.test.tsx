@@ -231,7 +231,7 @@ describe('getSlots', () => {
     expect(slots.GenericDiv).toHaveLength(1);
   });
 
-  test('getSlows converts null element in multi-slot to empty array', () => {
+  test('getSlots converts null element in multi-slot to empty array', () => {
     const _children = null;
     const { slots } = getSlots(_children, SLOT_SCHEMA);
 
