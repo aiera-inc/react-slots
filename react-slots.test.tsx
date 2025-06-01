@@ -120,7 +120,9 @@ describe('getSlots', () => {
     expect(children).toHaveLength(0);
 
     expect(slots).toHaveProperty('GenericDiv');
-    expect(slots.GenericDiv).toMatchObject(_children);
+    expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
+    expect(slots.GenericDiv).toHaveLength(1);
+    expect(slots.GenericDiv[0]).toMatchObject(_children);
   });
 
   test('handles multiples of slot', () => {
@@ -190,7 +192,8 @@ describe('getSlots', () => {
     const { children, slots } = getSlots(_children, SLOT_SCHEMA);
     // Nested fragment is not flattened, so GenericDiv is treated as child
     expect(children).toHaveLength(1);
-    expect(slots.GenericDiv).toBeUndefined();
+    expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
+    expect(slots.GenericDiv).toHaveLength(0);
   });
 
   test('getSlots handles aliased children', () => {
@@ -217,6 +220,33 @@ describe('getSlots', () => {
 
     const { getByTestId } = render(<Parent />);
     expect(getByTestId('slot').textContent).toBe('generic times two!');
+  });
+
+  test('getSlots converts single element in multi-slot to array', () => {
+    const _children = <GenericDiv />;
+    const { slots } = getSlots(_children, SLOT_SCHEMA);
+
+    expect(slots.GenericDiv).toBeDefined();
+    expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
+    expect(slots.GenericDiv).toHaveLength(1);
+  });
+
+  test('getSlows converts null element in multi-slot to empty array', () => {
+    const _children = null;
+    const { slots } = getSlots(_children, SLOT_SCHEMA);
+
+    expect(slots.GenericDiv).toBeDefined();
+    expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
+    expect(slots.GenericDiv).toHaveLength(0);
+  });
+
+  test('getSlows converts undefined element in multi-slot to empty array', () => {
+    const _children = undefined;
+    const { slots } = getSlots(_children, SLOT_SCHEMA);
+
+    expect(slots.GenericDiv).toBeDefined();
+    expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
+    expect(slots.GenericDiv).toHaveLength(0);
   });
 });
 

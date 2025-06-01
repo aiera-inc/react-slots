@@ -145,6 +145,7 @@ export function getSlots<D extends SlotDictionary>(
   for (const slot in schema) {
     if (Array.isArray(schema[slot])) {
       constructorMap.set(schema[slot][0], slot);
+      sortedSlots[slot] = [] as Partial<Slots<D>>[Extract<keyof D, string>];
     } else {
       constructorMap.set(schema[slot], slot);
     }
@@ -168,8 +169,8 @@ export function getSlots<D extends SlotDictionary>(
               // Only one instance of element. Insert
               p.slots[key] = cv;
             } else if (!(key in p.slots)) {
-              // Multiple allowed - first ecounter. Treat as single
-              p.slots[key] = cv;
+              // Multiple allowed - first ecounter
+              p.slots[key] = [cv];
             } else if (Array.isArray(p.slots[key])) {
               // Multiple allowed - stack 'em
               (p.slots[key] as JSX.Element[]).push(cv);
