@@ -10,7 +10,7 @@ import {
 import { render } from '@testing-library/react';
 import { expectTypeOf } from 'expect-type';
 
-const GenericDiv = ({ text = 'slot' }) => <div>{text}</div>;
+const GenericDiv: React.FC<{ text?: string }> = ({ text = 'slot' }) => <div>{text}</div>;
 const SLOT_SCHEMA = { GenericDiv: [GenericDiv] } as const;
 
 describe('WithSlotProps', function () {
