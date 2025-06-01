@@ -10,7 +10,7 @@ import {
 import { render } from '@testing-library/react';
 import { expectTypeOf } from 'expect-type';
 
-const GenericDiv = () => <div></div>;
+const GenericDiv = ({ text = 'slot' }) => <div>{text}</div>;
 const SLOT_SCHEMA = { GenericDiv: [GenericDiv] } as const;
 
 describe('WithSlotProps', function () {
@@ -191,6 +191,32 @@ describe('getSlots', () => {
     // Nested fragment is not flattened, so GenericDiv is treated as child
     expect(children).toHaveLength(1);
     expect(slots.GenericDiv).toBeUndefined();
+  });
+
+  test.only('getSlots handles aliased children', () => {
+    const GenericDiv = ({ text = 'slot' }) => <div>{text}</div>;
+
+    const HOC = SlottedComponent({ GenericDiv: [GenericDiv] })(({ slots }) => {
+      return (
+        <div>
+          <div data-testid="slot">{slots.GenericDiv}</div>
+        </div>
+      );
+    });
+
+    const Parent = () => {
+      const slot = <HOC.GenericDiv text="generic" />;
+      return (
+        <HOC>
+          {slot}
+          <HOC.GenericDiv text="other-generic" />
+          <span>child</span>
+        </HOC>
+      );
+    };
+
+    const { getByTestId } = render(<Parent />);
+    expect(getByTestId('slot').textContent).toBe('generic');
   });
 });
 
