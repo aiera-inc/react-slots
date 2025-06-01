@@ -193,7 +193,7 @@ describe('getSlots', () => {
     expect(slots.GenericDiv).toBeUndefined();
   });
 
-  test.only('getSlots handles aliased children', () => {
+  test('getSlots handles aliased children', () => {
     const GenericDiv = ({ text = 'slot' }) => <div>{text}</div>;
 
     const HOC = SlottedComponent({ GenericDiv: [GenericDiv] })(({ slots }) => {
@@ -209,14 +209,14 @@ describe('getSlots', () => {
       return (
         <HOC>
           {slot}
-          <HOC.GenericDiv text="other-generic" />
+          <HOC.GenericDiv text=" times two!" />
           <span>child</span>
         </HOC>
       );
     };
 
     const { getByTestId } = render(<Parent />);
-    expect(getByTestId('slot').textContent).toBe('generic');
+    expect(getByTestId('slot').textContent).toBe('generic times two!');
   });
 });
 
