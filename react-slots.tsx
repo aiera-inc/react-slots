@@ -169,7 +169,7 @@ export function getSlots<D extends SlotDictionary>(
               // Only one instance of element. Insert
               p.slots[key] = cv;
             } else if (!(key in p.slots)) {
-              // Multiple allowed - first ecounter
+              // Multiple allowed - first encounter
               p.slots[key] = [cv];
             } else if (Array.isArray(p.slots[key])) {
               // Multiple allowed - stack 'em
