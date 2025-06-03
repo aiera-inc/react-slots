@@ -1,15 +1,26 @@
 {
   "name": "@aiera-inc/react-slots",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A simple utility for adding named slots to React components, inspired by the slot pattern in Vue.",
   "keywords": [
     "react",
     "slots",
+    "react-slots",
     "ui",
+    "ui-components",
     "frontend",
     "typescript",
     "javascript",
-    "utility"
+    "utility",
+    "component",
+    "composition",
+    "lib",
+    "library",
+    "aiera",
+    "aiera-inc",
+    "@aiera",
+    "@aiera-inc",
+    "aiera-inc/react-slots"
   ],
   "homepage": "https://github.com/aiera-inc/react-slots#readme",
   "bugs": {
@@ -43,7 +54,8 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "lint": "eslint .",
     "fmt": "prettier --write .",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
@@ -55,8 +67,10 @@
     "eslint": "^9.26.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "expect-type": "^1.2.1",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^16.1.0",
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.3",
     "tslib": "^2.8.1",
@@ -73,5 +87,17 @@
     "trailingComma": "all",
     "tabWidth": 2,
     "printWidth": 100
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.json": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write"
+    ]
   }
 }
