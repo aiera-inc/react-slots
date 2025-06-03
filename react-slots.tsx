@@ -50,10 +50,10 @@
  * __Warning__: This does not support nested fragments. Wrapping a slotted child
  * two levels deep in a fragment will cause it to be treated as a generic child.
  */
-import React, { type JSXElementConstructor, type ReactNode, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 /** A narrowed version of the React.JSXElementConstructor. */
-export type SlotConstructor<P = any> = (props: P) => React.ReactElement | null;
+export type SlotConstructor<P = any> = (props: P) => JSX.Element | null;
 
 /** A dictionary defining the types of slots on an element. Each key should
  * point to a React component or a tuple containing a React component. The
@@ -227,16 +227,17 @@ function resolveChildSlot<
  * @param schema
  * @returns
  */
-export function withSlots<P extends { children?: ReactNode }, T extends SlotDictionary>(
-  Parent: JSXElementConstructor<P>,
-  schema: T,
-) {
+export function withSlots<
+  C extends (props: WithSlotProps<any, T>) => JSX.Element,
+  P extends React.PropsWithChildren<Parameters<C>[0]>,
+  T extends SlotDictionary,
+>(Parent: C, schema: T) {
   /** Takes the incoming children and separates out any with element
    * constructors matching definitions used in the schema. The separated
    * elements are stored under the slots */
   function SlotProvider(props: {
     [K in keyof P as K extends 'slots' ? never : K]: P[K];
-  }) {
+  }): JSX.Element {
     const { slots, children } = useMemo(() => getSlots(props?.children, schema), [props?.children]);
 
     return (
@@ -269,7 +270,7 @@ export function withSlots<P extends { children?: ReactNode }, T extends SlotDict
  * @returns A higher order component that wraps the parent component.
  */
 export function SlottedComponent<T extends SlotDictionary>(schema: T) {
-  return function <P>(Parent: JSXElementConstructor<WithSlotProps<P, T>>) {
+  return function <P>(Parent: (props: WithSlotProps<P, T>) => JSX.Element) {
     return withSlots(Parent, schema);
   };
 }
