@@ -1,4 +1,4 @@
-import { type WithSlotProps, withSlots } from '../react-slots';
+import { useSlots } from '../react-slots';
 
 // Your parent components props
 type GenericProps<T> = {
@@ -6,27 +6,23 @@ type GenericProps<T> = {
   otherProp?: string;
 };
 
-// The components you are assigning as slots
-const SLOT_SCHEMA = {
-  Title: (props: { title: string }) => <header>{props.title}</header>,
-  Footer: () => <footer>Footer</footer>,
-} as const;
+const Title = (props: { title: string }) => <header>{props.title}</header>;
+const Footer = () => <footer>Footer</footer>;
 
-function _GenericExample<T>({
+function GenericExample_<T>({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   filterId,
-  slots: { Title, Footer },
-}: WithSlotProps<GenericProps<T>, typeof SLOT_SCHEMA>) {
+  children: _children,
+}: React.PropsWithChildren<GenericProps<T>>) {
+  const { slots } = useSlots(_children, { Title, Footer });
+
   return (
     <div>
-      {Title}
+      {slots.Title}
       <h3>Generic Syntax Example</h3>
-      {Footer}
+      {slots.Footer}
     </div>
   );
 }
 
-export const GenericExample = withSlots<typeof _GenericExample, typeof SLOT_SCHEMA, true>(
-  _GenericExample,
-  SLOT_SCHEMA,
-);
+export const GenericExample = Object.assign(GenericExample_, { Title, Footer });
