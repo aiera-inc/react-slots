@@ -220,24 +220,6 @@ function resolveChildSlot<
   return child;
 }
 
-type ExtractSlotProps<T> = T extends React.JSXElementConstructor<infer P> ? P : never;
-type ExtractProps<P, T extends SlotDictionary> = P extends WithSlotProps<infer U, T> ? U : never;
-type GenerateNewComponentSignature<T extends { [x: string]: any }> = <U>(
-  props: React.PropsWithChildren<{ [K in keyof T]: ReplaceUnknownsWithGeneric<T[K], U> }>,
-) => JSX.Element;
-
-/**
- * We are recreating the component signature so that we can splice the
- * generics back into it's props. This is possible an insane thing to do,
- * but that hasn't stopped me before!
- */
-type _RECREATED_<
-  C extends (props: WithSlotProps<any, T>) => JSX.Element,
-  T extends SlotDictionary,
-> = GenerateNewComponentSignature<ExtractProps<ExtractSlotProps<C>, T>>;
-
-type ReplaceUnknownsWithGeneric<T, U> = unknown extends T ? U : T;
-
 /**
  * Automatically applies a Slot Signature to the
  * parent component
@@ -248,42 +230,29 @@ type ReplaceUnknownsWithGeneric<T, U> = unknown extends T ? U : T;
 export function withSlots<
   C extends (props: WithSlotProps<any, T>) => JSX.Element,
   T extends SlotDictionary,
-  IsGeneric extends boolean = false,
   P extends React.PropsWithChildren<Parameters<C>[0]> = React.PropsWithChildren<Parameters<C>[0]>,
   _P = { [K in keyof P as K extends 'slots' ? never : K]: P[K] },
->(
-  Parent: C,
-  schema: T,
-): (true extends IsGeneric ? _RECREATED_<C, T> : (props: _P) => JSX.Element) & {
-  readonly [Property in keyof T]: T[Property] extends readonly [SlotConstructor]
-    ? T[Property]['0']
-    : T[Property] extends { [x: string]: React.JSXElementConstructor<infer P> }
-      ? SlotConstructor<P>
-      : T[Property];
-} {
+  _S = {
+    readonly [Property in keyof T]: T[Property] extends readonly [SlotConstructor]
+      ? T[Property]['0']
+      : T[Property] extends { [x: string]: React.JSXElementConstructor<infer P> }
+        ? SlotConstructor<P>
+        : T[Property];
+  },
+>(Parent: C, schema: T): React.FC<_P> & _S {
   /** Takes the incoming children and separates out any with element
    * constructors matching definitions used in the schema. The separated
    * elements are stored under the slots */
   function SlotProvider(props: React.PropsWithChildren<_P>): JSX.Element {
     const { slots, children } = useMemo(() => getSlots(props?.children, schema), [props?.children]);
 
-    return (
-      <Parent {...({ ...props, slots } as P)} slots={slots}>
-        {children}
-      </Parent>
-    );
+    return <Parent {...({ ...props, slots } as P)}>{children}</Parent>;
   }
 
-  return Object.assign(
-    SlotProvider,
-    Object.fromEntries(Object.entries(schema).map(([key, val]) => [key, resolveChildSlot(val)])),
-  ) as (true extends IsGeneric ? _RECREATED_<C, T> : (props: _P) => JSX.Element) & {
-    readonly [Property in keyof T]: T[Property] extends readonly [SlotConstructor]
-      ? T[Property]['0']
-      : T[Property] extends { [x: string]: React.JSXElementConstructor<infer P> }
-        ? SlotConstructor<P>
-        : T[Property];
-  };
+  for (const key in schema) {
+    (SlotProvider as any)[key] = resolveChildSlot(schema[key]);
+  }
+  return SlotProvider as React.FC<_P> & _S;
 }
 
 /**
@@ -299,4 +268,25 @@ export function SlottedComponent<T extends SlotDictionary>(schema: T) {
   return function <P>(Parent: (props: WithSlotProps<P, T>) => JSX.Element) {
     return withSlots(Parent, schema);
   };
+}
+
+/**
+ * A custom React hook that extracts and organizes slot components from the given children
+ * based on a provided slot schema. Returns an object containing the extracted slots and
+ * the remaining children that do not match any slot in the schema.
+ *
+ * @experimental
+ * @param children - The React children elements to be processed for slot extraction.
+ * @param schema - An object defining the expected slots and their types.
+ * @returns An object with two properties:
+ *   - slots: An object mapping slot names to their corresponding React elements.
+ *   - children: The remaining React children that were not matched to any slot.
+ */
+export function useSlots<T extends SlotDictionary>(children: React.ReactNode, schema: T) {
+  const { slots, children: filteredChildren } = useMemo(
+    () => getSlots(children, schema),
+    [children, schema],
+  );
+
+  return { slots, children: filteredChildren };
 }
