@@ -53,7 +53,7 @@
 import React, { useMemo } from 'react';
 
 /** A narrowed version of the React.JSXElementConstructor. */
-export type SlotConstructor<P = any> = (props: P) => JSX.Element | null;
+export type SlotConstructor<P = any> = (props: P) => React.JSX.Element | null;
 
 /** A dictionary defining the types of slots on an element. Each key should
  * point to a React component or a tuple containing a React component. The
@@ -94,8 +94,8 @@ export type WithSlotProps<P, T extends SlotDictionary> = React.PropsWithChildren
       [K in keyof T as T[K] extends { readonly [x: string]: SlotConstructor }
         ? never
         : K]: T[K] extends readonly [React.JSXElementConstructor<any>]
-        ? JSX.Element[]
-        : JSX.Element;
+        ? React.JSX.Element[]
+        : React.JSX.Element;
     };
   }
 >;
@@ -107,7 +107,9 @@ export interface SlotProviderInterface<T extends SlotDictionary> {
   slots: {
     [K in keyof T as T[K] extends { readonly [x: string]: SlotConstructor }
       ? never
-      : K]: T[K] extends readonly [React.JSXElementConstructor<any>] ? JSX.Element[] : JSX.Element;
+      : K]: T[K] extends readonly [React.JSXElementConstructor<any>]
+      ? React.JSX.Element[]
+      : React.JSX.Element;
   };
 }
 
@@ -173,10 +175,10 @@ export function getSlots<D extends SlotDictionary>(
               p.slots[key] = [cv];
             } else if (Array.isArray(p.slots[key])) {
               // Multiple allowed - stack 'em
-              (p.slots[key] as JSX.Element[]).push(cv);
+              (p.slots[key] as React.JSX.Element[]).push(cv);
             } else {
               // Multiple allowed - encounter second instance of element
-              p.slots[key] = [p.slots[key] as JSX.Element, cv];
+              p.slots[key] = [p.slots[key] as React.JSX.Element, cv];
             }
           } else {
             p.children.push(cv);
@@ -228,7 +230,7 @@ function resolveChildSlot<
  * @returns
  */
 export function withSlots<
-  C extends (props: WithSlotProps<any, T>) => JSX.Element,
+  C extends (props: WithSlotProps<any, T>) => React.JSX.Element,
   T extends SlotDictionary,
   P extends React.PropsWithChildren<Parameters<C>[0]> = React.PropsWithChildren<Parameters<C>[0]>,
   _P = { [K in keyof P as K extends 'slots' ? never : K]: P[K] },
@@ -243,7 +245,7 @@ export function withSlots<
   /** Takes the incoming children and separates out any with element
    * constructors matching definitions used in the schema. The separated
    * elements are stored under the slots */
-  function SlotProvider(props: React.PropsWithChildren<_P>): JSX.Element {
+  function SlotProvider(props: React.PropsWithChildren<_P>): React.JSX.Element {
     const { slots, children } = useMemo(() => getSlots(props?.children, schema), [props?.children]);
 
     return <Parent {...({ ...props, slots } as P)}>{children}</Parent>;
@@ -265,7 +267,7 @@ export function withSlots<
  * @returns A higher order component that wraps the parent component.
  */
 export function SlottedComponent<T extends SlotDictionary>(schema: T) {
-  return function <P>(Parent: (props: WithSlotProps<P, T>) => JSX.Element) {
+  return function <P>(Parent: (props: WithSlotProps<P, T>) => React.JSX.Element) {
     return withSlots(Parent, schema);
   };
 }

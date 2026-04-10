@@ -16,10 +16,13 @@ const SLOT_SCHEMA = { GenericDiv: [GenericDiv] } as const;
 describe('WithSlotProps', function () {
   test('WithSlotProps should have correct type', () => {
     type WrappedProps = { myProp: string };
-    type SlottedProps = WithSlotProps<WrappedProps, { readonly GenericDiv: () => JSX.Element }>;
+    type SlottedProps = WithSlotProps<
+      WrappedProps,
+      { readonly GenericDiv: () => React.JSX.Element }
+    >;
 
     expectTypeOf<SlottedProps>().toEqualTypeOf<
-      WrappedProps & { slots: { readonly GenericDiv: JSX.Element } } & {
+      WrappedProps & { slots: { readonly GenericDiv: React.JSX.Element } } & {
         children?: React.ReactNode | undefined;
       }
     >();
@@ -30,7 +33,7 @@ describe('WithSlotProps', function () {
     type SlottedProps = WithSlotProps<WrappedProps, typeof SLOT_SCHEMA>;
 
     expectTypeOf<SlottedProps>().toEqualTypeOf<
-      WrappedProps & { slots: { readonly GenericDiv: JSX.Element[] } } & {
+      WrappedProps & { slots: { readonly GenericDiv: React.JSX.Element[] } } & {
         children?: React.ReactNode | undefined;
       }
     >();
@@ -40,7 +43,7 @@ describe('WithSlotProps', function () {
     type WrappedProps = { myProp: string };
     type SlottedProps = WithSlotProps<
       WrappedProps,
-      { readonly Namespaced: { GenericDiv: () => JSX.Element } }
+      { readonly Namespaced: { GenericDiv: () => React.JSX.Element } }
     >;
 
     expectTypeOf<SlottedProps>().toEqualTypeOf<
@@ -52,13 +55,16 @@ describe('WithSlotProps', function () {
 
 describe('SlotProviderInterface', () => {
   test('SlotProviderInterface should have correct type', () => {
-    interface ExtendedProps
-      extends SlotProviderInterface<{ readonly GenericDiv: () => JSX.Element }> {
+    interface ExtendedProps extends SlotProviderInterface<{
+      readonly GenericDiv: () => React.JSX.Element;
+    }> {
       myProp: string;
     }
 
     expectTypeOf<ExtendedProps['myProp']>().toEqualTypeOf<string>();
-    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{ readonly GenericDiv: JSX.Element }>();
+    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{
+      readonly GenericDiv: React.JSX.Element;
+    }>();
     expectTypeOf<ExtendedProps['children']>().toEqualTypeOf<React.ReactNode | undefined>();
   });
 
@@ -68,13 +74,16 @@ describe('SlotProviderInterface', () => {
     }
 
     expectTypeOf<ExtendedProps['myProp']>().toEqualTypeOf<string>();
-    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{ readonly GenericDiv: JSX.Element[] }>();
+    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{
+      readonly GenericDiv: React.JSX.Element[];
+    }>();
     expectTypeOf<ExtendedProps['children']>().toEqualTypeOf<React.ReactNode | undefined>();
   });
 
   test('SlotProviderInterface should not have namespaced slot types', () => {
-    interface ExtendedProps
-      extends SlotProviderInterface<{ readonly Namespaced: { GenericDiv: () => JSX.Element } }> {
+    interface ExtendedProps extends SlotProviderInterface<{
+      readonly Namespaced: { GenericDiv: () => React.JSX.Element };
+    }> {
       myProp: string;
     }
 
