@@ -16,10 +16,13 @@ const SLOT_SCHEMA = { GenericDiv: [GenericDiv] } as const;
 describe('WithSlotProps', function () {
   test('WithSlotProps should have correct type', () => {
     type WrappedProps = { myProp: string };
-    type SlottedProps = WithSlotProps<WrappedProps, { readonly GenericDiv: () => JSX.Element }>;
+    type SlottedProps = WithSlotProps<
+      WrappedProps,
+      { readonly GenericDiv: () => React.JSX.Element }
+    >;
 
     expectTypeOf<SlottedProps>().toEqualTypeOf<
-      WrappedProps & { slots: { readonly GenericDiv: JSX.Element } } & {
+      WrappedProps & { slots: { readonly GenericDiv: React.JSX.Element } } & {
         children?: React.ReactNode | undefined;
       }
     >();
@@ -30,7 +33,7 @@ describe('WithSlotProps', function () {
     type SlottedProps = WithSlotProps<WrappedProps, typeof SLOT_SCHEMA>;
 
     expectTypeOf<SlottedProps>().toEqualTypeOf<
-      WrappedProps & { slots: { readonly GenericDiv: JSX.Element[] } } & {
+      WrappedProps & { slots: { readonly GenericDiv: React.JSX.Element[] } } & {
         children?: React.ReactNode | undefined;
       }
     >();
@@ -40,7 +43,7 @@ describe('WithSlotProps', function () {
     type WrappedProps = { myProp: string };
     type SlottedProps = WithSlotProps<
       WrappedProps,
-      { readonly Namespaced: { GenericDiv: () => JSX.Element } }
+      { readonly Namespaced: { GenericDiv: () => React.JSX.Element } }
     >;
 
     expectTypeOf<SlottedProps>().toEqualTypeOf<
@@ -52,13 +55,16 @@ describe('WithSlotProps', function () {
 
 describe('SlotProviderInterface', () => {
   test('SlotProviderInterface should have correct type', () => {
-    interface ExtendedProps
-      extends SlotProviderInterface<{ readonly GenericDiv: () => JSX.Element }> {
+    interface ExtendedProps extends SlotProviderInterface<{
+      readonly GenericDiv: () => React.JSX.Element;
+    }> {
       myProp: string;
     }
 
     expectTypeOf<ExtendedProps['myProp']>().toEqualTypeOf<string>();
-    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{ readonly GenericDiv: JSX.Element }>();
+    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{
+      readonly GenericDiv: React.JSX.Element;
+    }>();
     expectTypeOf<ExtendedProps['children']>().toEqualTypeOf<React.ReactNode | undefined>();
   });
 
@@ -68,13 +74,16 @@ describe('SlotProviderInterface', () => {
     }
 
     expectTypeOf<ExtendedProps['myProp']>().toEqualTypeOf<string>();
-    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{ readonly GenericDiv: JSX.Element[] }>();
+    expectTypeOf<ExtendedProps['slots']>().toEqualTypeOf<{
+      readonly GenericDiv: React.JSX.Element[];
+    }>();
     expectTypeOf<ExtendedProps['children']>().toEqualTypeOf<React.ReactNode | undefined>();
   });
 
   test('SlotProviderInterface should not have namespaced slot types', () => {
-    interface ExtendedProps
-      extends SlotProviderInterface<{ readonly Namespaced: { GenericDiv: () => JSX.Element } }> {
+    interface ExtendedProps extends SlotProviderInterface<{
+      readonly Namespaced: { GenericDiv: () => React.JSX.Element };
+    }> {
       myProp: string;
     }
 
@@ -181,7 +190,7 @@ describe('getSlots', () => {
     expect(slots.GenericDiv).toBeDefined();
   });
 
-  test('getSlots does not flatten nested fragments', () => {
+  test('flattens nested fragments recursively', () => {
     const _children = [
       <React.Fragment key="1">
         <React.Fragment>
@@ -190,10 +199,26 @@ describe('getSlots', () => {
       </React.Fragment>,
     ];
     const { children, slots } = getSlots(_children, SLOT_SCHEMA);
-    // Nested fragment is not flattened, so GenericDiv is treated as child
-    expect(children).toHaveLength(1);
+    expect(children).toHaveLength(0);
     expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
-    expect(slots.GenericDiv).toHaveLength(0);
+    expect(slots.GenericDiv).toHaveLength(1);
+  });
+
+  test('flattens deeply nested fragments', () => {
+    const _children = [
+      <React.Fragment key="1">
+        <React.Fragment>
+          <React.Fragment>
+            <GenericDiv key="2" />
+            <div key="3" />
+          </React.Fragment>
+        </React.Fragment>
+      </React.Fragment>,
+      <GenericDiv key="4" />,
+    ];
+    const { children, slots } = getSlots(_children, SLOT_SCHEMA);
+    expect(children).toHaveLength(1);
+    expect(slots.GenericDiv).toHaveLength(2);
   });
 
   test('getSlots handles aliased children', () => {
@@ -247,6 +272,63 @@ describe('getSlots', () => {
     expect(slots.GenericDiv).toBeDefined();
     expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
     expect(slots.GenericDiv).toHaveLength(0);
+  });
+});
+
+describe('dev-mode warnings', () => {
+  let warnSpy: ReturnType<typeof jest.spyOn>;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  test('warns on duplicate single-slot', () => {
+    const SingleSchema = { GenericDiv } as const;
+    const _children = [<GenericDiv key="1" />, <GenericDiv key="2" />];
+    const { slots } = getSlots(_children, SingleSchema);
+
+    // Behavior: last instance wins
+    expect(slots.GenericDiv).toBeDefined();
+
+    // Warning fired for the duplicate
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Duplicate slot "GenericDiv"'));
+  });
+
+  test('warns on unmatched function component', () => {
+    const UnknownComponent = () => <span>unknown</span>;
+    const _children = [<UnknownComponent key="1" />];
+    getSlots(_children, SLOT_SCHEMA);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Component "UnknownComponent" was passed as a child'),
+    );
+  });
+
+  test('does not warn on unmatched native elements', () => {
+    const _children = [<div key="1" />, <span key="2" />];
+    getSlots(_children, SLOT_SCHEMA);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('does not warn on namespaced component children', () => {
+    const _children = <GenericDiv />;
+    getSlots(_children, { Namespaced: { GenericDiv } });
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('warns on invalid schema value', () => {
+    // @ts-expect-error - intentionally passing invalid schema
+    getSlots(undefined, { Bad: 'not a function' });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Schema key "Bad" has an invalid value'),
+    );
   });
 });
 

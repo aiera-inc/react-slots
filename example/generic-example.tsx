@@ -1,4 +1,4 @@
-import { useSlots } from '../react-slots';
+import { useSlots } from '@aiera-inc/react-slots';
 
 // Your parent components props
 type GenericProps<T> = {

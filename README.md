@@ -9,24 +9,25 @@ A simple utility for adding named slots to React components, inspired by the slo
 - **Multiple/Repeatable slots**: Allow multiple children for a slot by wrapping the slot component in an array.
 - **Composed components**: Add components to the namespace without rendering them as slots.
 - **TypeScript support**: Strongly typed slot schemas and props.
-- **Tiny bundle size**: A whopping 1.1kb file.
+- **React Server Component support**: Use `getSlots` in server components via the `/server` entry point.
+- **Dev-mode warnings**: Actionable console warnings for common mistakes like duplicate slots and schema mismatches.
+- **React 18 & 19**: Works with both React ^18 and ^19.
+- **Tiny bundle size**: 2.3kb client / 1.8kb server.
+
+**[Try it on StackBlitz](https://stackblitz.com/github/aiera-inc/react-slots/tree/main/example?file=my-component.tsx)**
 
 ## Installation
 
-Add the package to your React application using your preferred package manager.
-
 ```
-npm i aiera-inc/react-slots
+npm i @aiera-inc/react-slots
 ```
-
-Alternatively copy the `react-slots.tsx` file directly into your project. It's that small!
 
 ## Usage
 
 Slotted components are created using the `SlottedComponent` utility method exported by the library and consumed just like any other React component.
 
 ```tsx
-import { SlottedComponent } from 'react-slots';
+import { SlottedComponent } from '@aiera-inc/react-slots';
 
 // Your parent components props
 type MyComponentProps = {
@@ -77,7 +78,7 @@ export function App() {
 }
 ```
 
-Note, the order of the slotted child components doesn't actually matter because the `MyComponent` code has placed it in a concrete location within it's layout.
+Note, the order of the slotted child components doesn't actually matter because the `MyComponent` code has placed it in a concrete location within its layout.
 
 ```jsx
 function App() {
@@ -90,7 +91,6 @@ function App() {
         <article>A second article.</article>
         <MyComponent.Footer />
       </MyComponent>
-      
       // ...to this
       <MyComponent author="John Doe">
         <MyComponent.Title title="Hello World" />
@@ -153,9 +153,10 @@ Sometimes you may want to link components to indicate a relationship between par
 ```tsx
 const ArticleExample = (props) => <article>{props.children}</article>;
 
-const SLOT_SCHEMA = {           // Wrapping the component in curly braces
-  Article: { ArticleExample },  // tells the utility this is a namespaced
-} as const;                     // component.
+const SLOT_SCHEMA = {
+  // Wrapping the component in curly braces
+  Article: { ArticleExample }, // tells the utility this is a namespaced
+} as const; // component.
 
 const Blog = SlottedComponent(SLOT_SCHEMA)<{ author: string }>(({
   author,
@@ -175,30 +176,85 @@ function App() {
 }
 ```
 
+## Server Components
+
+The library provides a separate entry point for React Server Components that exports only the pure functions — no hooks, no `'use client'` boundary.
+
+```tsx
+// In a server component
+import { getSlots } from '@aiera-inc/react-slots/server';
+
+export function ServerLayout({ children }: { children: React.ReactNode }) {
+  const { slots, children: rest } = getSlots(children, schema);
+  return (
+    <div>
+      {slots.Header}
+      <main>{rest}</main>
+    </div>
+  );
+}
+```
+
+The main entry point (`@aiera-inc/react-slots`) includes a `'use client'` directive and re-exports everything from the server module, plus the hook-based APIs.
+
+| Entry point                     | Exports                                                        | RSC-safe        |
+| ------------------------------- | -------------------------------------------------------------- | --------------- |
+| `@aiera-inc/react-slots`        | `getSlots`, `withSlots`, `SlottedComponent`, `useSlots`, types | No (uses hooks) |
+| `@aiera-inc/react-slots/server` | `getSlots`, types                                              | Yes             |
+
 ## API Reference
-
-### `withSlots(Parent, schema)`
-
-Wraps your component and attaches slot components as static properties. The `slots` prop will be injected into your component, containing the slotted children.
 
 ### `getSlots(children, schema)`
 
-Utility to extract slots and non-slot children from a component's children.
+Utility to extract slots and non-slot children from a component's children. This is a pure function with no hooks — safe for use in React Server Components via the `/server` entry point.
+
+### `withSlots(Parent, schema)`
+
+Wraps your component and attaches slot components as static properties. The `slots` prop will be injected into your component, containing the slotted children. Client-only (uses hooks internally).
 
 ### `SlottedComponent(schema)`
 
-Higher-order component for applying a slot schema in a more declarative way.
+Higher-order component for applying a slot schema in a more declarative way. Client-only (wraps `withSlots`).
+
+### `useSlots(children, schema)`
+
+React hook that extracts slots from children with memoization. Client-only.
+
+```tsx
+import { useSlots } from '@aiera-inc/react-slots';
+
+function MyComponent({ children }: { children?: React.ReactNode }) {
+  const { slots, children: rest } = useSlots(children, { Title, Footer });
+  return (
+    <div>
+      {slots.Title}
+      <main>{rest}</main>
+      {slots.Footer}
+    </div>
+  );
+}
+```
 
 ## TypeScript Types
 
 - `SlotDictionary`: Defines the slot schema.
-- `WithSlotProps`: Utility type for merging slot props into your component props.
-- `SlotProviderInterface`: Interface alternative for slot props.
+- `SlotConstructor`: A narrowed component function type for slots.
+- `WithSlotProps<P, T>`: Utility type for merging slot props into your component props.
+- `SlotProviderInterface<T>`: Interface alternative for slot props.
+
+## Dev-Mode Warnings
+
+In non-production environments, the library warns about common mistakes:
+
+- **Duplicate single-slot**: When multiple children match a single-slot, only the last is kept.
+- **Unmatched component**: When a function component child doesn't match any slot in the schema.
+- **Invalid schema**: When a schema key has an invalid value.
+
+Warnings are tree-shaken in production builds. The dev check works across Node, Deno, Bun, and Cloudflare Workers via `globalThis.process.env.NODE_ENV` with a `globalThis.__DEV__` fallback.
 
 ## Notes
 
-- Nested child fragments of composed components will be automatically flattened.
-- Nesting fragments by 2 or more levels is not supported.
+- Fragments are recursively flattened, so slotted children are found regardless of nesting depth.
 - Namespaced slots are not included in the `slots` prop.
 
 ## License

@@ -8,6 +8,12 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+test-envs/*/node_modules
+test-envs/*/package-lock.json
+example/node_modules
+example/package-lock.json
+example/dist
+CLAUDE.md
 dist
 dist-ssr
 *.local

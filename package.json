@@ -1,26 +1,24 @@
 {
   "name": "@aiera-inc/react-slots",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A simple utility for adding named slots to React components, inspired by the slot pattern in Vue.",
   "keywords": [
     "react",
     "slots",
     "react-slots",
-    "ui",
+    "named-slots",
+    "vue-slots",
+    "children",
+    "compound-components",
+    "render-slots",
     "ui-components",
     "frontend",
     "typescript",
-    "javascript",
     "utility",
     "component",
     "composition",
-    "lib",
-    "library",
     "aiera",
-    "aiera-inc",
-    "@aiera",
-    "@aiera-inc",
-    "aiera-inc/react-slots"
+    "aiera-inc"
   ],
   "homepage": "https://github.com/aiera-inc/react-slots#readme",
   "bugs": {
@@ -37,6 +35,10 @@
     ".": {
       "import": "./dist/react-slots.js",
       "types": "./dist/react-slots.d.ts"
+    },
+    "./server": {
+      "import": "./dist/react-slots-server.js",
+      "types": "./dist/react-slots-server.d.ts"
     }
   },
   "main": "dist/react-slots.js",
@@ -49,7 +51,11 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "rm -rf ./dist & npm run build:main & npm run build:types",
+    "typecheck": "npm run typecheck:react-18 && npm run typecheck:react-19",
+    "typecheck:react-18": "tsc --project test-envs/react-18/tsconfig.json",
+    "typecheck:react-19": "tsc --project test-envs/react-19/tsconfig.json",
+    "test:all": "npm run typecheck && npm test",
+    "build": "rm -rf ./dist && npm run build:main & npm run build:types & wait",
     "build:main": "node ./build.js",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "lint": "eslint .",
@@ -62,7 +68,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^29.5.14",
-    "@types/react": "18.2.0",
+    "@types/react": "^18.2.8",
     "esbuild": "^0.25.4",
     "eslint": "^9.26.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -78,8 +84,8 @@
     "typescript-eslint": "^8.32.1"
   },
   "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "prettier": {
     "singleQuote": true,
