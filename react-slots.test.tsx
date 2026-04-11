@@ -190,7 +190,7 @@ describe('getSlots', () => {
     expect(slots.GenericDiv).toBeDefined();
   });
 
-  test('getSlots does not flatten nested fragments', () => {
+  test('flattens nested fragments recursively', () => {
     const _children = [
       <React.Fragment key="1">
         <React.Fragment>
@@ -199,10 +199,26 @@ describe('getSlots', () => {
       </React.Fragment>,
     ];
     const { children, slots } = getSlots(_children, SLOT_SCHEMA);
-    // Nested fragment is not flattened, so GenericDiv is treated as child
-    expect(children).toHaveLength(1);
+    expect(children).toHaveLength(0);
     expect(Array.isArray(slots.GenericDiv)).toBeTruthy();
-    expect(slots.GenericDiv).toHaveLength(0);
+    expect(slots.GenericDiv).toHaveLength(1);
+  });
+
+  test('flattens deeply nested fragments', () => {
+    const _children = [
+      <React.Fragment key="1">
+        <React.Fragment>
+          <React.Fragment>
+            <GenericDiv key="2" />
+            <div key="3" />
+          </React.Fragment>
+        </React.Fragment>
+      </React.Fragment>,
+      <GenericDiv key="4" />,
+    ];
+    const { children, slots } = getSlots(_children, SLOT_SCHEMA);
+    expect(children).toHaveLength(1);
+    expect(slots.GenericDiv).toHaveLength(2);
   });
 
   test('getSlots handles aliased children', () => {

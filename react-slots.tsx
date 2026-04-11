@@ -47,8 +47,8 @@
  *    SuccessMsg: {MemberNavSuccessMsg},
  *    });
  *
- * __Warning__: This does not support nested fragments. Wrapping a slotted child
- * two levels deep in a fragment will cause it to be treated as a generic child.
+ * Fragments are recursively flattened, so slotted children are found
+ * regardless of how deeply they are nested in fragments.
  */
 import React, { useMemo } from 'react';
 
@@ -116,6 +116,25 @@ export interface SlotProviderInterface<T extends SlotDictionary> {
 /** Reference to the React Fragment type. */
 const ReactFragmentSymbol = Symbol.for('react.fragment');
 
+/** Recursively flattens React.Fragment wrappers from a children array. */
+function flattenFragments(nodes: React.ReactNode[]): React.ReactNode[] {
+  const result: React.ReactNode[] = [];
+  for (const node of nodes) {
+    if (
+      node &&
+      typeof node === 'object' &&
+      'type' in node &&
+      (node as any).type === ReactFragmentSymbol
+    ) {
+      const nested = (node as any).props?.children ?? [];
+      result.push(...flattenFragments(Array.isArray(nested) ? nested : [nested]));
+    } else {
+      result.push(node);
+    }
+  }
+  return result;
+}
+
 /**
  * Creates a record containing the JSX elements
  * passed as children on the component
@@ -153,41 +172,37 @@ export function getSlots<D extends SlotDictionary>(
     }
   }
 
-  return (
-    _children
-      // Excludes all falsy values from the children array (null, undefined, etc)
-      .filter((c) => c)
-      // @ts-expect-error - A react element's type is not a string... it's a symbol.
-      .flatMap((e) => (e.type === ReactFragmentSymbol ? (e.props?.children ?? []) : e))
-      .reduce(
-        (p, cv) => {
-          const childType = cv.type;
+  // Flatten fragments recursively, then filter out falsy values
+  const flattened = flattenFragments(_children.filter((c) => c)).filter((c) => c) as any[];
 
-          if (typeof childType !== 'string' && constructorMap.has(childType)) {
-            const key = constructorMap.get(childType);
-            const allowMultiple = Array.isArray(schema[key]);
+  return flattened.reduce(
+    (p, cv) => {
+      const childType = cv.type;
 
-            if (!allowMultiple) {
-              // Only one instance of element. Insert
-              p.slots[key] = cv;
-            } else if (!(key in p.slots)) {
-              // Multiple allowed - first encounter
-              p.slots[key] = [cv];
-            } else if (Array.isArray(p.slots[key])) {
-              // Multiple allowed - stack 'em
-              (p.slots[key] as React.JSX.Element[]).push(cv);
-            } else {
-              // Multiple allowed - encounter second instance of element
-              p.slots[key] = [p.slots[key] as React.JSX.Element, cv];
-            }
-          } else {
-            p.children.push(cv);
-          }
+      if (typeof childType !== 'string' && constructorMap.has(childType)) {
+        const key = constructorMap.get(childType);
+        const allowMultiple = Array.isArray(schema[key]);
 
-          return p;
-        },
-        { children: sortedChildren, slots: sortedSlots as Slots<D> },
-      )
+        if (!allowMultiple) {
+          // Only one instance of element. Insert
+          p.slots[key] = cv;
+        } else if (!(key in p.slots)) {
+          // Multiple allowed - first encounter
+          p.slots[key] = [cv];
+        } else if (Array.isArray(p.slots[key])) {
+          // Multiple allowed - stack 'em
+          (p.slots[key] as React.JSX.Element[]).push(cv);
+        } else {
+          // Multiple allowed - encounter second instance of element
+          p.slots[key] = [p.slots[key] as React.JSX.Element, cv];
+        }
+      } else {
+        p.children.push(cv);
+      }
+
+      return p;
+    },
+    { children: sortedChildren, slots: sortedSlots as Slots<D> },
   );
 }
 
