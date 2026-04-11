@@ -275,6 +275,63 @@ describe('getSlots', () => {
   });
 });
 
+describe('dev-mode warnings', () => {
+  let warnSpy: ReturnType<typeof jest.spyOn>;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  test('warns on duplicate single-slot', () => {
+    const SingleSchema = { GenericDiv } as const;
+    const _children = [<GenericDiv key="1" />, <GenericDiv key="2" />];
+    const { slots } = getSlots(_children, SingleSchema);
+
+    // Behavior: last instance wins
+    expect(slots.GenericDiv).toBeDefined();
+
+    // Warning fired for the duplicate
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Duplicate slot "GenericDiv"'));
+  });
+
+  test('warns on unmatched function component', () => {
+    const UnknownComponent = () => <span>unknown</span>;
+    const _children = [<UnknownComponent key="1" />];
+    getSlots(_children, SLOT_SCHEMA);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Component "UnknownComponent" was passed as a child'),
+    );
+  });
+
+  test('does not warn on unmatched native elements', () => {
+    const _children = [<div key="1" />, <span key="2" />];
+    getSlots(_children, SLOT_SCHEMA);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('does not warn on namespaced component children', () => {
+    const _children = <GenericDiv />;
+    getSlots(_children, { Namespaced: { GenericDiv } });
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('warns on invalid schema value', () => {
+    // @ts-expect-error - intentionally passing invalid schema
+    getSlots(undefined, { Bad: 'not a function' });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Schema key "Bad" has an invalid value'),
+    );
+  });
+});
+
 describe('withSlots', () => {
   test('withSlots attaches slot components as static properties', () => {
     const Parent = ({ children }: { children?: React.ReactNode }) => <section>{children}</section>;

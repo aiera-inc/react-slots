@@ -113,6 +113,22 @@ export interface SlotProviderInterface<T extends SlotDictionary> {
   };
 }
 
+/**
+ * Runtime-agnostic development mode check. Works across Node, Deno, Bun,
+ * Cloudflare Workers, and browsers. Returns false if NODE_ENV is not available.
+ */
+const __DEV__: boolean = /* @__PURE__ */ (() => {
+  try {
+    return (
+      (typeof globalThis !== 'undefined' &&
+        (globalThis as any).process?.env?.NODE_ENV !== 'production') ||
+      (globalThis as any).__DEV__ === true
+    );
+  } catch {
+    return false;
+  }
+})();
+
 /** Reference to the React Fragment type. */
 const ReactFragmentSymbol = Symbol.for('react.fragment');
 
@@ -163,12 +179,31 @@ export function getSlots<D extends SlotDictionary>(
     _children = children;
   }
 
+  // Track namespaced component constructors so we don't warn about them
+  const namespacedConstructors = new WeakSet();
+
   for (const slot in schema) {
-    if (Array.isArray(schema[slot])) {
-      constructorMap.set(schema[slot][0], slot);
+    const value = schema[slot];
+    if (Array.isArray(value)) {
+      if (__DEV__ && typeof value[0] !== 'function') {
+        console.warn(
+          `[react-slots] Schema key "${slot}" has an invalid array value. Expected [ComponentFunction].`,
+        );
+      }
+      constructorMap.set(value[0], slot);
       sortedSlots[slot] = [] as Partial<Slots<D>>[Extract<keyof D, string>];
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Namespaced slot — register inner components to suppress false-positive warnings
+      constructorMap.set(value, slot);
+      for (const inner of Object.values(value)) {
+        if (typeof inner === 'function') namespacedConstructors.add(inner);
+      }
+    } else if (__DEV__ && typeof value !== 'function') {
+      console.warn(
+        `[react-slots] Schema key "${slot}" has an invalid value. Expected a component function, [component] array, or { component } object.`,
+      );
     } else {
-      constructorMap.set(schema[slot], slot);
+      constructorMap.set(value, slot);
     }
   }
 
@@ -184,6 +219,12 @@ export function getSlots<D extends SlotDictionary>(
         const allowMultiple = Array.isArray(schema[key]);
 
         if (!allowMultiple) {
+          if (__DEV__ && key in p.slots) {
+            const name = childType.displayName || childType.name || 'Unknown';
+            console.warn(
+              `[react-slots] Duplicate slot "${key}" detected (component: ${name}). Only the last instance will be rendered. To allow multiple, use array syntax: { ${key}: [${name}] }`,
+            );
+          }
           // Only one instance of element. Insert
           p.slots[key] = cv;
         } else if (!(key in p.slots)) {
@@ -197,6 +238,13 @@ export function getSlots<D extends SlotDictionary>(
           p.slots[key] = [p.slots[key] as React.JSX.Element, cv];
         }
       } else {
+        if (__DEV__ && typeof childType === 'function' && !namespacedConstructors.has(childType)) {
+          const name = childType.displayName || childType.name || 'Unknown';
+          const schemaKeys = Object.keys(schema).join(', ');
+          console.warn(
+            `[react-slots] Component "${name}" was passed as a child but doesn't match any slot in the schema. It will be treated as a generic child. Available slots: [${schemaKeys}]`,
+          );
+        }
         p.children.push(cv);
       }
 
