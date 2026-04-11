@@ -1,5 +1,5 @@
 {
-  "include": ["react-slots.tsx"],
+  "include": ["react-slots.tsx", "react-slots-server.tsx"],
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2023", "dom"],

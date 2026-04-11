@@ -1,258 +1,31 @@
+'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
- * A simple library to add named slots to React components. Wrapping your
- * component export in the `withSlots()` method will automatically add
- * (and effectively namespace) the slot components to the parent.
+ * Client entry point for react-slots. This module re-exports everything from
+ * the server module and adds client-only APIs that use React hooks:
+ * withSlots, SlottedComponent, and useSlots.
  *
- * _e.g._ export default withSlots(MemberNav, {
- *      ErrorMsg: MemberNavErrorMsg,
- *      SuccessMsg: MemberNavSuccessMsg,
- *      EditButton: MemberNavEditButton
- *    });
- *
- * Any component importing the MemberNav can then pass the slots using
- * <MemberNav>
- *  <MemberNav.ErrorMsg></MemberNav.ErrorMsg>
- *  <MemberNav.SuccessMsg></MemberNav.SuccessMsg>
- *  <MemberNav.EditButton></MemberNav.EditButton>
- * </MemberNav>
- *
- * Named slotted children can be retrieved by calling `getSlots()` in the
- * parent component and passing in the children prop and the same schema used
- * in the export statement.
- *
- * The returned object will map the slot name to the JSX Element. From the
- * above example slots.ErrorMsg would link to the MemberNav.ErrorMsg child.
- *
- * You can allow for repeat slots by wrapping the component type in your schema,
- * in square brackets.
- *
- * _e.g._ export default withSlots(MemberNav, {
- *      ...
- *      SuccessMsg: [MemberNavSuccessMsg],
- *    });
- *
- * This indicates that multiple Success message components can be slotted and
- * returned.
- *
- * Namespaced components are also supported. These are intended to be used when you
- * want to add a child component to the parent's namespace but don't particularly
- * care about where it is surfaced in the Parent JSX. Namespaced components will
- * still be passed to the `getSlots()` method but will not be included in the
- * returned slots object.
- *
- * _e.g._ export default withSlots(MemberNav, {
- *     ...
- *    SuccessMsg: {MemberNavSuccessMsg},
- *    });
- *
- * Fragments are recursively flattened, so slotted children are found
- * regardless of how deeply they are nested in fragments.
+ * For React Server Components, import from '@aiera-inc/react-slots/server'
+ * to use getSlots directly without the 'use client' boundary.
  */
 import React, { useMemo } from 'react';
+import {
+  getSlots,
+  type SlotConstructor,
+  type SlotDictionary,
+  type WithSlotProps,
+} from './react-slots-server';
 
-/** A narrowed version of the React.JSXElementConstructor. */
-export type SlotConstructor<P = any> = (props: P) => React.JSX.Element | null;
-
-/** A dictionary defining the types of slots on an element. Each key should
- * point to a React component or a tuple containing a React component. The
- * tuple indicates that multiple instances of the component are allowed.
- * The component type should be a function that returns a valid React element. */
-export type SlotDictionary<P = any> = {
-  [x: string]:
-    | React.JSXElementConstructor<P>
-    | readonly [React.JSXElementConstructor<P>]
-    | { [x: string]: React.JSXElementConstructor<P> };
-};
-
-/** This looks deceivingly complex but it's realy just because of the nested
- * ternaries that TypeScript syntax requires.
- *
- * For every key in the SlotDictionary, we check if the value is a tuple
- * containing a SlotConstructor. If it is, we return the return type of the
- * first element of the tuple. If it's not a tuple, we check if it's an object
- * containing SlotConstructors. If it is, we return the union of all the
- * SlotConstructors. If it's not an object, we check if it's a single
- * SlotConstructor and return it's return type.
- */
-type Slots<T extends SlotDictionary> = {
-  [Property in keyof T]: T[Property] extends [SlotConstructor]
-    ? ReturnType<T[Property]['0']> | ReturnType<T[Property]['0']>[]
-    : T[Property] extends { [x: string]: SlotConstructor }
-      ? T[Property][keyof T[Property]]
-      : T[Property] extends SlotConstructor
-        ? ReturnType<T[Property]> | ReturnType<T[Property]>[]
-        : any;
-};
-
-/** A utility type that will merge the slot definitions from
- * your Slot Schema into the component props. */
-export type WithSlotProps<P, T extends SlotDictionary> = React.PropsWithChildren<
-  P & {
-    slots: {
-      [K in keyof T as T[K] extends { readonly [x: string]: SlotConstructor }
-        ? never
-        : K]: T[K] extends readonly [React.JSXElementConstructor<any>]
-        ? React.JSX.Element[]
-        : React.JSX.Element;
-    };
-  }
->;
-
-/** Alternative utility type if you prefer to declare your component props
- * using the `interface` keyword. */
-export interface SlotProviderInterface<T extends SlotDictionary> {
-  children?: React.ReactNode | undefined;
-  slots: {
-    [K in keyof T as T[K] extends { readonly [x: string]: SlotConstructor }
-      ? never
-      : K]: T[K] extends readonly [React.JSXElementConstructor<any>]
-      ? React.JSX.Element[]
-      : React.JSX.Element;
-  };
-}
-
-/**
- * Runtime-agnostic development mode check. Works across Node, Deno, Bun,
- * Cloudflare Workers, and browsers. Returns false if NODE_ENV is not available.
- */
-const __DEV__: boolean = /* @__PURE__ */ (() => {
-  try {
-    return (
-      (typeof globalThis !== 'undefined' &&
-        (globalThis as any).process?.env?.NODE_ENV !== 'production') ||
-      (globalThis as any).__DEV__ === true
-    );
-  } catch {
-    return false;
-  }
-})();
-
-/** Reference to the React Fragment type. */
-const ReactFragmentSymbol = Symbol.for('react.fragment');
-
-/** Recursively flattens React.Fragment wrappers from a children array. */
-function flattenFragments(nodes: React.ReactNode[]): React.ReactNode[] {
-  const result: React.ReactNode[] = [];
-  for (const node of nodes) {
-    if (
-      node &&
-      typeof node === 'object' &&
-      'type' in node &&
-      (node as any).type === ReactFragmentSymbol
-    ) {
-      const nested = (node as any).props?.children ?? [];
-      result.push(...flattenFragments(Array.isArray(nested) ? nested : [nested]));
-    } else {
-      result.push(node);
-    }
-  }
-  return result;
-}
-
-/**
- * Creates a record containing the JSX elements
- * passed as children on the component
- * @param children
- * @param schema
- * @returns
- */
-export function getSlots<D extends SlotDictionary>(
-  children: undefined | React.ReactNode | React.ReactNode[],
-  schema: D,
-): {
-  slots: Slots<D>;
-  children: (undefined | React.ReactNode | React.ReactNode[])[];
-} {
-  const sortedChildren: (undefined | React.ReactNode | React.ReactNode[])[] = [];
-  const sortedSlots: Partial<Slots<D>> = {};
-  const constructorMap = new WeakMap();
-
-  let _children: React.ReactNode[];
-
-  if (!children) {
-    _children = [];
-  } else if (!Array.isArray(children)) {
-    _children = [children];
-  } else {
-    _children = children;
-  }
-
-  // Track namespaced component constructors so we don't warn about them
-  const namespacedConstructors = new WeakSet();
-
-  for (const slot in schema) {
-    const value = schema[slot];
-    if (Array.isArray(value)) {
-      if (__DEV__ && typeof value[0] !== 'function') {
-        console.warn(
-          `[react-slots] Schema key "${slot}" has an invalid array value. Expected [ComponentFunction].`,
-        );
-      }
-      constructorMap.set(value[0], slot);
-      sortedSlots[slot] = [] as Partial<Slots<D>>[Extract<keyof D, string>];
-    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      // Namespaced slot — register inner components to suppress false-positive warnings
-      constructorMap.set(value, slot);
-      for (const inner of Object.values(value)) {
-        if (typeof inner === 'function') namespacedConstructors.add(inner);
-      }
-    } else if (__DEV__ && typeof value !== 'function') {
-      console.warn(
-        `[react-slots] Schema key "${slot}" has an invalid value. Expected a component function, [component] array, or { component } object.`,
-      );
-    } else {
-      constructorMap.set(value, slot);
-    }
-  }
-
-  // Flatten fragments recursively, then filter out falsy values
-  const flattened = flattenFragments(_children.filter((c) => c)).filter((c) => c) as any[];
-
-  return flattened.reduce(
-    (p, cv) => {
-      const childType = cv.type;
-
-      if (typeof childType !== 'string' && constructorMap.has(childType)) {
-        const key = constructorMap.get(childType);
-        const allowMultiple = Array.isArray(schema[key]);
-
-        if (!allowMultiple) {
-          if (__DEV__ && key in p.slots) {
-            const name = childType.displayName || childType.name || 'Unknown';
-            console.warn(
-              `[react-slots] Duplicate slot "${key}" detected (component: ${name}). Only the last instance will be rendered. To allow multiple, use array syntax: { ${key}: [${name}] }`,
-            );
-          }
-          // Only one instance of element. Insert
-          p.slots[key] = cv;
-        } else if (!(key in p.slots)) {
-          // Multiple allowed - first encounter
-          p.slots[key] = [cv];
-        } else if (Array.isArray(p.slots[key])) {
-          // Multiple allowed - stack 'em
-          (p.slots[key] as React.JSX.Element[]).push(cv);
-        } else {
-          // Multiple allowed - encounter second instance of element
-          p.slots[key] = [p.slots[key] as React.JSX.Element, cv];
-        }
-      } else {
-        if (__DEV__ && typeof childType === 'function' && !namespacedConstructors.has(childType)) {
-          const name = childType.displayName || childType.name || 'Unknown';
-          const schemaKeys = Object.keys(schema).join(', ');
-          console.warn(
-            `[react-slots] Component "${name}" was passed as a child but doesn't match any slot in the schema. It will be treated as a generic child. Available slots: [${schemaKeys}]`,
-          );
-        }
-        p.children.push(cv);
-      }
-
-      return p;
-    },
-    { children: sortedChildren, slots: sortedSlots as Slots<D> },
-  );
-}
+// Re-export everything from the server module
+export {
+  getSlots,
+  type SlotConstructor,
+  type SlotDictionary,
+  type Slots,
+  type WithSlotProps,
+  type SlotProviderInterface,
+} from './react-slots-server';
 
 /**
  * Resolves a child slot from various possible input types.

@@ -35,6 +35,10 @@
     ".": {
       "import": "./dist/react-slots.js",
       "types": "./dist/react-slots.d.ts"
+    },
+    "./server": {
+      "import": "./dist/react-slots-server.js",
+      "types": "./dist/react-slots-server.d.ts"
     }
   },
   "main": "dist/react-slots.js",

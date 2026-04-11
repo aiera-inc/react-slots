@@ -20,6 +20,6 @@
       "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"]
     }
   },
-  "include": ["../../react-slots.tsx", "../typecheck.tsx"],
+  "include": ["../../react-slots.tsx", "../../react-slots-server.tsx", "../typecheck.tsx"],
   "exclude": ["../../dist"]
 }
