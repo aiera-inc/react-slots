@@ -14,6 +14,8 @@ A simple utility for adding named slots to React components, inspired by the slo
 - **React 18 & 19**: Works with both React ^18 and ^19.
 - **Tiny bundle size**: 2.3kb client / 1.8kb server.
 
+**[Try it on StackBlitz](https://stackblitz.com/github/aiera-inc/react-slots/tree/main/example?file=my-component.tsx)**
+
 ## Installation
 
 ```

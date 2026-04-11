@@ -1,4 +1,4 @@
-import { SlottedComponent } from '../react-slots';
+import { SlottedComponent } from '@aiera-inc/react-slots';
 
 // Your parent components props
 type MyComponentProps = {
